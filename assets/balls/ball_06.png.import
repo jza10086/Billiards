@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://y4uylko0og2c"
-path="res://.godot/imported/ball_06.png-e719e39fc27577f12a8399576b40bb44.ctex"
+uid="uid://cnx4dtakn7ewd"
+path="res://.godot/imported/ball_06.png-40bd1756762e85b99abe8c8dd5906096.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/balls/ball_06.png"
-dest_files=["res://.godot/imported/ball_06.png-e719e39fc27577f12a8399576b40bb44.ctex"]
+source_file="res://games/minigame/godot_party_default_billiards/assets/balls/ball_06.png"
+dest_files=["res://.godot/imported/ball_06.png-40bd1756762e85b99abe8c8dd5906096.ctex"]
 
 [params]
 

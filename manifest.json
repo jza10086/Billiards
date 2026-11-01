@@ -1,0 +1,51 @@
+{
+  "manifest_version": 2,
+  "core_api_major": 4,
+  "package_version": "1.0.0",
+  "id": "godot_party_default_billiards",
+  "name": "GodotPartyDefault · 夜幕球房",
+  "kind": "minigame",
+  "entry": "game.tscn",
+  "player_counts": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "tags": [
+    "original"
+  ],
+  "dependencies": {
+    "godot_party_default_protocol": "1.0.0"
+  },
+  "adapters": [
+    {
+      "id": "standard",
+      "protocol": {
+        "id": "godot_party_default_protocol",
+        "api_major": 1,
+        "min_api_minor": 0
+      },
+      "entry": "adapter.gd"
+    }
+  ],
+  "config_schema": "settings.gd",
+  "streams": {
+    "state": {
+      "mode": "reliable",
+      "audience": "instance"
+    },
+    "private_view": {
+      "mode": "reliable",
+      "audience": "instance"
+    },
+    "cursors": {
+      "mode": "ordered",
+      "audience": "instance"
+    }
+  },
+  "introduction": "2–8 人九球分桌赛；优先两人桌，奇数组最后三人桌，每桌一名胜者，胜负分组继续决出名次。"
+}

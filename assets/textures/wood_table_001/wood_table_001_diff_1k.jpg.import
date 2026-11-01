@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dp1rurber8klr"
-path="res://.godot/imported/wood_table_001_diff_1k.jpg-cc0a5ac99e2a05a9b95bb659acc31182.ctex"
+uid="uid://dd7rhm8x23rw3"
+path="res://.godot/imported/wood_table_001_diff_1k.jpg-4eb1de7b01cccaf6b1bc03a3c1018e21.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/wood_table_001/wood_table_001_diff_1k.jpg"
-dest_files=["res://.godot/imported/wood_table_001_diff_1k.jpg-cc0a5ac99e2a05a9b95bb659acc31182.ctex"]
+source_file="res://games/minigame/godot_party_default_billiards/assets/textures/wood_table_001/wood_table_001_diff_1k.jpg"
+dest_files=["res://.godot/imported/wood_table_001_diff_1k.jpg-4eb1de7b01cccaf6b1bc03a3c1018e21.ctex"]
 
 [params]
 
