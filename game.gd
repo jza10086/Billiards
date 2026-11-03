@@ -25,7 +25,7 @@ var placing: bool = false
 
 func build_game() -> void:
 	heading.text = "3d桌球 · 九球分桌赛"
-	footer.text = "先碰最小号球 · 合法进 9 赢桌 · 犯规给下家自由球 · 胜者组、败者组继续决出全部名次"
+	footer.text = "鼠标：瞄准 · 左键：摆自由球"
 	surface = SubViewportContainer.new()
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	surface.stretch = true
@@ -60,7 +60,7 @@ func build_game() -> void:
 	sidebar.add_child(table_choice)
 	controls = label(sidebar, "", 20)
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label(sidebar, "击球力度")
+	var power_caption: Label = label(sidebar, "力度", 20)
 	power_slider = HSlider.new()
 	power_slider.min_value = 0.05
 	power_slider.max_value = 1.0
@@ -84,6 +84,20 @@ func build_game() -> void:
 				selected_table = key
 				break)
 	label(sidebar, "鼠标瞄准，按「出杆」击球。\n白球图选择高低杆和左右塞。\n自由球：点击台面摆白球。", 20)
+	compose_fullscreen_hud()
+	var actions: HBoxContainer = HBoxContainer.new()
+	$OverlayHUD.add_child(actions)
+	actions.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	actions.offset_left = 28
+	actions.offset_top = -84
+	actions.offset_bottom = -28
+	actions.add_theme_constant_override("separation", 16)
+	power_caption.reparent(actions)
+	power_slider.reparent(actions)
+	power_slider.custom_minimum_size.x = 240
+	power_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	shoot_button.reparent(actions)
+	shoot_button.custom_minimum_size.x = 140
 
 func godot_party_graphics_targets() -> Dictionary:
 	var world: WorldEnvironment
@@ -155,7 +169,7 @@ func make_snapshot() -> Dictionary:
 	return snap
 
 func _can_act() -> bool:
-	if not running or local_id.is_empty() or not view.get("tables", {}).has(selected_table):
+	if not running or api.input.input_blocked or local_id.is_empty() or not view.get("tables", {}).has(selected_table):
 		return false
 	var table: Dictionary = view.tables[selected_table]
 	return table.winner == "" and not table.moving and table.ids[table.turn] == local_id
