@@ -1,8 +1,9 @@
 extends Node3D
 ## Original metric table/lounge meshes. Play surface is XZ at Y = 0.
-const BALL_RADIUS: Variant = 0.028575
-const HALF_WIDTH: Variant = 0.635
-const HALF_LENGTH: Variant = 1.27
+const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
+const BALL_RADIUS: float = Physics.RADIUS
+const HALF_WIDTH: float = Physics.HALF_WIDTH
+const HALF_LENGTH: float = Physics.HALF_LENGTH
 var felt: StandardMaterial3D
 var wood: StandardMaterial3D
 var brass: StandardMaterial3D
@@ -118,11 +119,23 @@ func build() -> void:
 		for z: Variant in [-.687,.687]:
 			box(self,Vector3(.15,.075,1.12),Vector3(x*.742,.005,z),wood)
 			box(self,Vector3(.016,.016,1.10),Vector3(x*.815,.042,z),brass)
-			box(self,Vector3(.052,.055,1.09),Vector3(x*.661,.021,z),felt)
 	for z: Variant in [-1.0,1.0]:
 		box(self,Vector3(1.11,.075,.15),Vector3(0,.005,z*1.377),wood)
 		box(self,Vector3(1.09,.016,.016),Vector3(0,.042,z*1.45),brass)
-		box(self,Vector3(1.085,.055,.052),Vector3(0,.021,z*1.296),felt)
+	# Each nose and pocket jaw is drawn from the physical contact segment.
+	for segment: PackedVector2Array in Physics.cushion_segments():
+		var edge: Vector2 = segment[1] - segment[0]
+		var normal: Vector2 = Vector2(-edge.y, edge.x).normalized()
+		var midpoint: Vector2 = (segment[0] + segment[1]) * 0.5
+		# Corner jaws belong to either the side or end rail; radial direction
+		# would put one of their bevels across the open pocket.
+		var side_rail: bool = absf(midpoint.x) >= HALF_WIDTH - 0.001
+		var facing_outward: float = normal.x * signf(midpoint.x) if side_rail else normal.y * signf(midpoint.y)
+		if facing_outward < 0.0:
+			normal = -normal
+		var center: Vector2 = midpoint + normal * 0.026
+		var cushion: MeshInstance3D = box(self, Vector3(edge.length(), 0.055, 0.052), Vector3(center.x, 0.021, center.y), felt)
+		cushion.rotation.y = -edge.angle()
 	# Pocket mouths are black recessed cylinders, not black decals on cloth.
 	for z: Variant in [-1.27,0.0,1.27]:
 		for x: Variant in [-.635,.635]:

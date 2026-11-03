@@ -1,6 +1,7 @@
 extends "res://games/protocols/godot_party_default_protocol/ranked_round.gd"
 ## Parallel nine-ball tables share only the tournament. Host physics resolves every shot.
 const Tournament: Script = preload("res://games/minigame/godot_party_default_billiards/tournament.gd")
+const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
 const Art: Script = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
 var tournament: RefCounted = Tournament.new()
 var viewport: SubViewport
@@ -10,6 +11,9 @@ var art: Node3D
 var balls: Array[Node3D] = []
 var table_choice: OptionButton
 var power_slider: HSlider
+var tip: Vector2 = Vector2.ZERO
+var tip_control: Control
+var tip_label: Label
 var shoot_button: Button
 var selected_table: String = ""
 var shown_table: String = ""
@@ -63,13 +67,23 @@ func build_game() -> void:
 	power_slider.step = 0.01
 	power_slider.value = 0.5
 	sidebar.add_child(power_slider)
+	tip_label = label(sidebar, "击球点：中杆", 20)
+	tip_control = Control.new()
+	tip_control.custom_minimum_size = Vector2(0, 120)
+	tip_control.gui_input.connect(_tip_input)
+	tip_control.draw.connect(_draw_tip)
+	tip_control.tooltip_text = "点击或拖动白球：上方高杆，下方低杆，左右加塞"
+	sidebar.add_child(tip_control)
+	button(sidebar, "恢复中杆", func() -> void:
+		tip = Vector2.ZERO
+		_update_tip())
 	shoot_button = button(sidebar, "出杆", _shoot)
 	button(sidebar, "返回我的球桌", func() -> void:
 		for key: String in view.get("tables", {}):
 			if local_id in view.tables[key].ids and view.tables[key].winner == "":
 				selected_table = key
 				break)
-	label(sidebar, "移动鼠标瞄准，点击出杆。\n自由球：先点击台面摆白球。", 20)
+	label(sidebar, "鼠标瞄准，按「出杆」击球。\n白球图选择高低杆和左右塞。\n自由球：点击台面摆白球。", 20)
 
 func godot_party_graphics_targets() -> Dictionary:
 	var world: WorldEnvironment
@@ -97,6 +111,19 @@ func start_game() -> void:
 			ids[target] = saved
 		tournament.start(ids, float(settings.get("shot_seconds", 30)))
 
+## Fast ball motion needs more frequent snapshots than the shared turn-based UI.
+func _process(delta: float) -> void:
+	if not running:
+		return
+	elapsed += delta
+	tick_game(delta)
+	clock += delta
+	if clock >= 1.0 / 30.0:
+		clock = fmod(clock, 1.0 / 30.0)
+		if api.is_host():
+			publish()
+		render_game()
+
 func tick_game(delta: float) -> void:
 	if api.is_host():
 		tournament.tick(delta)
@@ -112,8 +139,9 @@ func tick_game(delta: float) -> void:
 		for index: int in balls.size():
 			var ball: Dictionary = table.balls[index]
 			balls[index].visible = ball.active
-			var target: Vector3 = Vector3(ball.pos.x, 0.028575, ball.pos.y)
+			var target: Vector3 = Vector3(ball.pos.x, Physics.RADIUS, ball.pos.y)
 			balls[index].position = balls[index].position.lerp(target, 1.0 - exp(-delta * 25)) if shown_table == selected_table else target
+			balls[index].quaternion = balls[index].quaternion.slerp(ball.orientation, 1.0 - exp(-delta * 25)) if shown_table == selected_table else ball.orientation
 		shown_table = selected_table
 	overlay.queue_redraw()
 
@@ -149,7 +177,30 @@ func _table_input(event: InputEvent) -> void:
 
 func _shoot() -> void:
 	if _can_act() and not view.tables[selected_table].free:
-		send_action({"kind": "shot", "table": selected_table, "epoch": view.tables[selected_table].epoch, "direction": aim, "power": power_slider.value})
+		send_action({"kind": "shot", "table": selected_table, "epoch": view.tables[selected_table].epoch, "direction": aim, "power": power_slider.value, "tip": tip})
+
+func _tip_input(event: InputEvent) -> void:
+	if not _can_act():
+		return
+	var selecting: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	var dragging: bool = event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0
+	if selecting or dragging:
+		var offset: Vector2 = (tip_control.get_local_mouse_position() - tip_control.size * 0.5) / 48.0
+		tip = Vector2(offset.x, -offset.y).limit_length(Physics.MAX_TIP)
+		_update_tip()
+
+func _update_tip() -> void:
+	var vertical: String = "高杆" if tip.y > 0.05 else ("低杆" if tip.y < -0.05 else "中杆")
+	var side: String = " · 右塞" if tip.x > 0.05 else (" · 左塞" if tip.x < -0.05 else "")
+	tip_label.text = "击球点：" + vertical + side
+	tip_control.queue_redraw()
+
+func _draw_tip() -> void:
+	var center: Vector2 = tip_control.size * 0.5
+	tip_control.draw_circle(center, 48.0, Color("#eee9da"))
+	tip_control.draw_line(center - Vector2(36, 0), center + Vector2(36, 0), Color("#acb0ad"), 1.0, true)
+	tip_control.draw_line(center - Vector2(0, 36), center + Vector2(0, 36), Color("#acb0ad"), 1.0, true)
+	tip_control.draw_circle(center + Vector2(tip.x, -tip.y) * 48.0, 5.0, Color("#b54338"))
 
 func _draw_aim() -> void:
 	if not _can_act() or view.tables[selected_table].free:

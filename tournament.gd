@@ -34,21 +34,9 @@ func _group(ids: Array, first_rank: int) -> void:
 		var table_id: String = str(next_table)
 		next_table += 1
 		var physics: RefCounted = Physics.new()
-		_rack_nine(physics)
 		tables[table_id] = {"ids": seats, "physics": physics, "turn": 0, "epoch": 0, "winner": "", "free": false, "break": true, "lowest": 1, "time": shot_seconds, "message": "先碰 1 号球开球", "range": "%d–%d 名" % [first_rank, first_rank + ids.size() - 1]}
 		group.tables.append(table_id)
 	groups.append(group)
-
-func _rack_nine(physics: RefCounted) -> void:
-	physics.balls.resize(10)
-	var rows: Array[int] = [1, 2, 3, 2, 1]
-	var order: Array[int] = [1, 2, 3, 4, 9, 5, 6, 7, 8]
-	var spacing: float = Physics.RADIUS * 2 + 0.0003
-	var index: int = 0
-	for row: int in rows.size():
-		for col: int in rows[row]:
-			physics.balls[order[index]].pos = Vector2((col - (rows[row] - 1) * 0.5) * spacing, -0.60 - row * spacing * sqrt(3.0) * 0.5)
-			index += 1
 
 func active_table(id: String) -> String:
 	for key: String in tables:
@@ -72,8 +60,12 @@ func act(id: String, data: Dictionary) -> bool:
 	elif data.get("kind") == "shot":
 		if table.free or not data.get("direction") is Vector2 or not data.direction.is_finite() or not (data.get("power") is float or data.get("power") is int) or not is_finite(float(data.power)) or data.power < 0.05 or data.power > 1:
 			return false
+		if data.direction.length_squared() < 0.000001 or data.direction.length_squared() > 1.01 or not data.get("tip") is Vector2 or not data.tip.is_finite() or data.tip.length_squared() > Physics.MAX_TIP * Physics.MAX_TIP + 0.000001:
+			return false
 		table.lowest = lowest(physics.balls)
-		return physics.shoot(data.direction, float(data.power) * Physics.MAX_SPEED)
+		# More slider travel at low speeds makes short positional shots controllable.
+		var speed: float = Physics.MAX_SPEED * pow(float(data.power), 1.5)
+		return physics.shoot(data.direction, speed, data.tip)
 	return false
 
 static func lowest(balls: Array) -> int:
