@@ -1,0 +1,20 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_Hans\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "2–8 人九球分桌赛；优先两人桌，奇数组最后三人桌，每桌一名胜者，胜负分组继续决出名次。"
+msgstr "2–8 人九球分桌赛；优先两人桌，奇数组最后三人桌，每桌一名胜者，胜负分组继续决出名次。"
+
+msgid "GodotPartyDefault · 夜幕球房"
+msgstr "GodotPartyDefault · 夜幕球房"
+
+msgid "每杆秒数（包括摆白球）"
+msgstr "每杆秒数（包括摆白球）"
+
+msgid "游戏规则"
+msgstr "游戏规则"
+
+msgid "赛事保护时限（秒）"
+msgstr "赛事保护时限（秒）"
