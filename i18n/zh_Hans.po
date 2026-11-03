@@ -7,8 +7,8 @@ msgstr ""
 msgid "2–8 人九球分桌赛；优先两人桌，奇数组最后三人桌，每桌一名胜者，胜负分组继续决出名次。"
 msgstr "2–8 人九球分桌赛；优先两人桌，奇数组最后三人桌，每桌一名胜者，胜负分组继续决出名次。"
 
-msgid "GodotPartyDefault · 夜幕球房"
-msgstr "GodotPartyDefault · 夜幕球房"
+msgid "GodotPartyDefault · 3d桌球"
+msgstr "GodotPartyDefault · 3d桌球"
 
 msgid "每杆秒数（包括摆白球）"
 msgstr "每杆秒数（包括摆白球）"

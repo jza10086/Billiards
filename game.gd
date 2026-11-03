@@ -20,7 +20,7 @@ var controls: Label
 var placing: bool = false
 
 func build_game() -> void:
-	heading.text = "夜幕球房 · 九球分桌赛"
+	heading.text = "3d桌球 · 九球分桌赛"
 	footer.text = "先碰最小号球 · 合法进 9 赢桌 · 犯规给下家自由球 · 胜者组、败者组继续决出全部名次"
 	surface = SubViewportContainer.new()
 	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
