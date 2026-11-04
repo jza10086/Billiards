@@ -18,3 +18,12 @@ msgstr "游戏规则"
 
 msgid "赛事保护时限（秒）"
 msgstr "赛事保护时限（秒）"
+
+msgid "hud.time"
+msgstr "赛事剩余 {time} 秒 · {tables} 张球桌进行中"
+
+msgid "hud.table"
+msgstr "球桌 {table} · {range}"
+
+msgid "hud.details"
+msgstr "{players}\n轮到：{turn}\n目标：{ball} 号 · 剩余 {time} 秒\n{message}"

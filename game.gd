@@ -2,113 +2,44 @@ extends "res://games/protocols/godot_party_default_protocol/ranked_round.gd"
 ## Parallel nine-ball tables share only the tournament. Host physics resolves every shot.
 const Tournament: Script = preload("res://games/minigame/godot_party_default_billiards/tournament.gd")
 const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
-const Art: Script = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
 var tournament: RefCounted = Tournament.new()
-var viewport: SubViewport
-var surface: SubViewportContainer
-var camera: Camera3D
-var art: Node3D
+const TableArt = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
+@onready var art: TableArt = %PoolTable
+@onready var camera: Camera3D = art.camera
 var balls: Array[Node3D] = []
-var table_choice: OptionButton
-var power_slider: HSlider
+@onready var table_choice: OptionButton = %TableChoice
+@onready var power_slider: HSlider = %Power
 var tip: Vector2 = Vector2.ZERO
-var tip_control: Control
-var tip_label: Label
-var shoot_button: Button
+@onready var tip_control: Control = %TipSelector
+@onready var tip_label: Label = %TipLabel
+@onready var shoot_button: Button = %Shoot
 var selected_table: String = ""
 var shown_table: String = ""
 var table_keys: Array[String] = []
 var aim: Vector2 = Vector2.UP
-var overlay: Control
-var controls: Label
+@onready var overlay: Control = %AimSurface
+@onready var controls: Label = %TableDetails
 var placing: bool = false
 
 func build_game() -> void:
-	heading.text = "3d桌球 · 九球分桌赛"
-	footer.text = "鼠标：瞄准 · 左键：摆自由球"
-	surface = SubViewportContainer.new()
-	surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	surface.stretch = true
-	stage.add_child(surface)
-	viewport = SubViewport.new()
-	viewport.own_world_3d = true
-	viewport.size = Vector2i(1200, 760)
-	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	surface.add_child(viewport)
-	art = Art.new()
-	viewport.add_child(art)
-	art.build()
-	camera = Camera3D.new()
-	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 3.6
-	camera.position = Vector3(0, 4, 0.01)
-	viewport.add_child(camera)
-	camera.look_at(Vector3.ZERO, Vector3.FORWARD)
-	camera.current = true
-	for number: int in 10:
-		var ball: Node3D = art.make_ball(number)
-		viewport.add_child(ball)
-		balls.append(ball)
-	overlay = Control.new()
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	balls.assign(art.rack.get_children())
 	overlay.gui_input.connect(_table_input)
 	overlay.draw.connect(_draw_aim)
-	stage.add_child(overlay)
-	table_choice = OptionButton.new()
 	table_choice.item_selected.connect(func(index: int) -> void: selected_table = table_keys[index])
-	sidebar.add_child(table_choice)
-	controls = label(sidebar, "", 20)
-	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var power_caption: Label = label(sidebar, "力度", 20)
-	power_slider = HSlider.new()
-	power_slider.min_value = 0.05
-	power_slider.max_value = 1.0
-	power_slider.step = 0.01
-	power_slider.value = 0.5
-	sidebar.add_child(power_slider)
-	tip_label = label(sidebar, "击球点：中杆", 20)
-	tip_control = Control.new()
-	tip_control.custom_minimum_size = Vector2(0, 120)
 	tip_control.gui_input.connect(_tip_input)
 	tip_control.draw.connect(_draw_tip)
-	tip_control.tooltip_text = "点击或拖动白球：上方高杆，下方低杆，左右加塞"
-	sidebar.add_child(tip_control)
-	button(sidebar, "恢复中杆", func() -> void:
+	%ResetTip.pressed.connect(func() -> void:
 		tip = Vector2.ZERO
 		_update_tip())
-	shoot_button = button(sidebar, "出杆", _shoot)
-	button(sidebar, "返回我的球桌", func() -> void:
+	shoot_button.pressed.connect(_shoot)
+	%MyTable.pressed.connect(func() -> void:
 		for key: String in view.get("tables", {}):
 			if local_id in view.tables[key].ids and view.tables[key].winner == "":
 				selected_table = key
 				break)
-	label(sidebar, "鼠标瞄准，按「出杆」击球。\n白球图选择高低杆和左右塞。\n自由球：点击台面摆白球。", 20)
-	compose_fullscreen_hud()
-	var actions: HBoxContainer = HBoxContainer.new()
-	$OverlayHUD.add_child(actions)
-	actions.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	actions.offset_left = 28
-	actions.offset_top = -84
-	actions.offset_bottom = -28
-	actions.add_theme_constant_override("separation", 16)
-	power_caption.reparent(actions)
-	power_slider.reparent(actions)
-	power_slider.custom_minimum_size.x = 240
-	power_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	shoot_button.reparent(actions)
-	shoot_button.custom_minimum_size.x = 140
 
 func godot_party_graphics_targets() -> Dictionary:
-	var world: WorldEnvironment
-	var sun: DirectionalLight3D
-	if art != null:
-		for node: Node in art.get_children():
-			if node is WorldEnvironment:
-				world = node
-			elif node is DirectionalLight3D:
-				sun = node
-	return {"world": world, "sun": sun, "materials_root": art}
+	return {"world": art.world, "sun": art.sun, "materials_root": art}
 
 func start_game() -> void:
 	if api.is_host():
@@ -175,11 +106,11 @@ func _can_act() -> bool:
 	return table.winner == "" and not table.moving and table.ids[table.turn] == local_id
 
 func _table_input(event: InputEvent) -> void:
-	if not _can_act():
+	if not event is InputEventMouse or not _can_act():
 		return
 	var table: Dictionary = view.tables[selected_table]
-	var pointer: Vector2 = overlay.get_local_mouse_position() * Vector2(viewport.size) / overlay.size
-	var hit: Variant = Plane(Vector3.UP, 0.028575).intersects_ray(camera.project_ray_origin(pointer), camera.project_ray_normal(pointer))
+	var pointer: Vector2 = overlay.get_global_transform_with_canvas() * event.position
+	var hit: Variant = Plane(Vector3.UP, Physics.RADIUS).intersects_ray(art.to_local(camera.project_ray_origin(pointer)), art.global_transform.basis.inverse() * camera.project_ray_normal(pointer))
 	if not hit is Vector3:
 		return
 	var point: Vector2 = Vector2(hit.x, hit.z)
@@ -220,8 +151,9 @@ func _draw_aim() -> void:
 	if not _can_act() or view.tables[selected_table].free:
 		return
 	var pos: Vector2 = view.tables[selected_table].balls[0].pos
-	var start: Vector2 = camera.unproject_position(Vector3(pos.x, 0.035, pos.y)) * overlay.size / Vector2(viewport.size)
-	var end: Vector2 = camera.unproject_position(Vector3(pos.x + aim.x * 0.7, 0.035, pos.y + aim.y * 0.7)) * overlay.size / Vector2(viewport.size)
+	var to_overlay: Transform2D = overlay.get_global_transform_with_canvas().affine_inverse()
+	var start: Vector2 = to_overlay * camera.unproject_position(art.to_global(Vector3(pos.x, 0.035, pos.y)))
+	var end: Vector2 = to_overlay * camera.unproject_position(art.to_global(Vector3(pos.x + aim.x * 0.7, 0.035, pos.y + aim.y * 0.7)))
 	overlay.draw_line(start, end, Color("#eee4ae"), 2, true)
 
 func render_game() -> void:
@@ -240,20 +172,18 @@ func render_game() -> void:
 		table_keys = active
 		table_choice.clear()
 		for key: String in table_keys:
-			table_choice.add_item("球桌 %d · %s" % [int(key) + 1, view.tables[key].range])
+			table_choice.add_item(api.i18n.text(&"hud.table", {"table": int(key) + 1, "range": view.tables[key].range}))
 	if selected_table in table_keys:
 		table_choice.select(table_keys.find(selected_table))
-	status.text = "赛事剩余 %d 秒 · %d 张球桌进行中" % [ceili(view.time), active.size()]
-	var lines: PackedStringArray = []
+	status.text = api.i18n.text(&"hud.time", {"time": ceili(view.time), "tables": active.size()})
 	for player: Dictionary in players:
-		lines.append("%s · %s" % [player.name, "第 %d 名" % int(view.ranks[player.player_id]) if view.ranks.has(player.player_id) else "比赛中"])
-	standings.text = "\n".join(lines)
+		update_standing(player.player_id, "%s · %s" % [player.name, "第 %d 名" % int(view.ranks[player.player_id]) if view.ranks.has(player.player_id) else "比赛中"])
 	if view.tables.has(selected_table):
 		var table: Dictionary = view.tables[selected_table]
 		var names: PackedStringArray = []
 		for id: String in table.ids:
 			names.append(player_name(id))
-		controls.text = " / ".join(names) + "\n轮到：" + player_name(table.ids[table.turn]) + "\n目标：%d 号 · 剩余 %d 秒\n%s" % [table.lowest, ceili(table.time), table.message]
+		controls.text = api.i18n.text(&"hud.details", {"players": " / ".join(names), "turn": player_name(table.ids[table.turn]), "ball": table.lowest, "time": ceili(table.time), "message": table.message})
 	shoot_button.disabled = not _can_act() or view.tables[selected_table].free
 	power_slider.editable = not shoot_button.disabled
 

@@ -4,6 +4,8 @@
 
 [ext_resource type="PackedScene" path="res://games/protocols/godot_party_default_protocol/ranked_round.tscn" id="round"]
 
+[ext_resource type="PackedScene" path="res://games/minigame/godot_party_default_billiards/pool_table.tscn" id="table"]
+
 [node name="Game" instance=ExtResource("round")]
 layout_mode = 3
 anchors_preset = 15
@@ -12,3 +14,87 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
+
+[node name="Background" parent="GameCanvas" index="0"]
+visible = false
+
+[node name="Heading" parent="OverlayHUD/Standard/Counters" index="0"]
+text = "3d桌球 · 九球分桌赛"
+
+[node name="Footer" parent="OverlayHUD/Standard" index="1"]
+text = "鼠标：瞄准 · 左键：摆自由球\nEsc：菜单"
+
+[node name="PoolTable" parent="." instance=ExtResource("table")]
+unique_name_in_owner = true
+
+[node name="AimSurface" type="Control" parent="GameCanvas/Stage"]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+
+[node name="TableChoice" type="OptionButton" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+
+
+[node name="TableDetails" type="Label" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+text = "小林 / 小叶\n轮到：小林\n目标：1 号 · 剩余 30 秒"
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 20
+
+
+[node name="TipLabel" type="Label" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+text = "击球点：中杆"
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 20
+
+
+[node name="TipSelector" type="Control" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+tooltip_text = "点击或拖动白球：上方高杆，下方低杆，左右加塞"
+
+[node name="ResetTip" type="Button" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+text = "恢复中杆"
+custom_minimum_size = Vector2(0,48)
+
+[node name="MyTable" type="Button" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+text = "返回我的球桌"
+custom_minimum_size = Vector2(0,48)
+
+[node name="Instructions" type="Label" parent="OverlayHUD/Standard/Details/SidebarScroll/Sidebar"]
+unique_name_in_owner = true
+text = "鼠标瞄准，按「出杆」击球。\n白球图选择高低杆和左右塞。\n自由球：点击台面摆白球。"
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 20
+
+
+[node name="Actions" type="HBoxContainer" parent="OverlayHUD/Standard"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -84.0
+offset_bottom = -28.0
+theme_override_constants/separation = 16
+
+[node name="PowerCaption" type="Label" parent="OverlayHUD/Standard/Actions"]
+text = "力度"
+theme_override_font_sizes/font_size = 20
+
+[node name="Power" type="HSlider" parent="OverlayHUD/Standard/Actions"]
+unique_name_in_owner = true
+min_value = 0.05
+max_value = 1.0
+step = 0.01
+value = 0.5
+custom_minimum_size = Vector2(240,0)
+size_flags_vertical = 4
+
+[node name="Shoot" type="Button" parent="OverlayHUD/Standard/Actions"]
+unique_name_in_owner = true
+text = "出杆"
+custom_minimum_size = Vector2(140,48)
