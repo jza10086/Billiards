@@ -3,7 +3,7 @@ extends "res://games/protocols/godot_party_default_protocol/ranked_round.gd"
 const Tournament: Script = preload("res://games/minigame/godot_party_default_billiards/tournament.gd")
 const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
 var tournament: RefCounted = Tournament.new()
-const TableArt = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
+const TableArt: Script = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
 @onready var art: TableArt = %PoolTable
 @onready var camera: Camera3D = art.camera
 var balls: Array[Node3D] = []
@@ -19,24 +19,28 @@ var table_keys: Array[String] = []
 var aim: Vector2 = Vector2.UP
 @onready var overlay: Control = %AimSurface
 @onready var controls: Label = %TableDetails
-var placing: bool = false
+@onready var reset_tip_button: Button = %ResetTip
+@onready var my_table_button: Button = %MyTable
 
 func build_game() -> void:
 	balls.assign(art.rack.get_children())
 	overlay.gui_input.connect(_table_input)
 	overlay.draw.connect(_draw_aim)
-	table_choice.item_selected.connect(func(index: int) -> void: selected_table = table_keys[index])
+	table_choice.item_selected.connect(_select_table)
 	tip_control.gui_input.connect(_tip_input)
 	tip_control.draw.connect(_draw_tip)
-	%ResetTip.pressed.connect(func() -> void:
-		tip = Vector2.ZERO
-		_update_tip())
+	reset_tip_button.pressed.connect(_reset_tip)
 	shoot_button.pressed.connect(_shoot)
-	%MyTable.pressed.connect(func() -> void:
-		for key: String in view.get("tables", {}):
-			if local_id in view.tables[key].ids and view.tables[key].winner == "":
-				selected_table = key
-				break)
+	my_table_button.pressed.connect(_return_to_my_table)
+	heading.text = api.i18n.text(&"hud.heading")
+	footer.text = api.i18n.text(&"hud.footer")
+	reset_tip_button.text = api.i18n.text(&"hud.reset_tip")
+	my_table_button.text = api.i18n.text(&"hud.my_table")
+	shoot_button.text = api.i18n.text(&"hud.shoot")
+	%Instructions.text = api.i18n.text(&"hud.instructions")
+	tip_control.tooltip_text = api.i18n.text(&"hud.tip_help")
+	$OverlayHUD/Standard/Actions/PowerCaption.text = api.i18n.text(&"hud.power")
+	_update_tip()
 
 func godot_party_graphics_targets() -> Dictionary:
 	return {"world": art.world, "sun": art.sun, "materials_root": art}
@@ -76,7 +80,7 @@ func tick_game(delta: float) -> void:
 			var rows: Array = []
 			for player: Dictionary in players:
 				rows.append({"player_id": player.player_id, "rank": tournament.ranks[player.player_id], "status": "completed", "metrics": {"rank": tournament.ranks[player.player_id]}})
-			finish_rows(rows, [{"key": "rank", "title": "最终名次", "format": "integer"}])
+			finish_rows(rows, [{"key": "rank", "title": api.i18n.text(&"result.rank"), "format": "integer"}])
 		elif elapsed >= float(settings.get("duration", 600)):
 			finish_rows([], [], "cancelled")
 	if view.get("tables", {}).has(selected_table):
@@ -99,8 +103,33 @@ func make_snapshot() -> Dictionary:
 	snap["time"] = maxf(0, float(settings.get("duration", 600)) - elapsed)
 	return snap
 
+## View-only controls remain available to spectators. A table popup owns its
+## selection, but blocks unrelated actions until it closes; menus block both.
+func _can_view_input(table_selection: bool = false) -> bool:
+	return running and not api.input.input_blocked and (table_selection or not table_choice.get_popup().visible)
+
+func _select_table(index: int) -> void:
+	if not _can_view_input(true):
+		return
+	selected_table = table_keys[index]
+
+func _return_to_my_table() -> void:
+	if not _can_view_input():
+		return
+	for key: String in view.tables:
+		if local_id in view.tables[key].ids and view.tables[key].winner == "":
+			selected_table = key
+			return
+
+func _reset_tip() -> void:
+	if not _can_view_input():
+		return
+	tip = Vector2.ZERO
+	_update_tip()
+
+## Only the entry sends logical actions; picking, aim and tip stay local view state.
 func _can_act() -> bool:
-	if not running or api.input.input_blocked or local_id.is_empty() or not view.get("tables", {}).has(selected_table):
+	if not _can_view_input() or local_id.is_empty() or not view.get("tables", {}).has(selected_table):
 		return false
 	var table: Dictionary = view.tables[selected_table]
 	return table.winner == "" and not table.moving and table.ids[table.turn] == local_id
@@ -130,14 +159,18 @@ func _tip_input(event: InputEvent) -> void:
 	var selecting: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
 	var dragging: bool = event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0
 	if selecting or dragging:
-		var offset: Vector2 = (tip_control.get_local_mouse_position() - tip_control.size * 0.5) / 48.0
+		var offset: Vector2 = (event.position - tip_control.size * 0.5) / 48.0
 		tip = Vector2(offset.x, -offset.y).limit_length(Physics.MAX_TIP)
 		_update_tip()
 
 func _update_tip() -> void:
-	var vertical: String = "高杆" if tip.y > 0.05 else ("低杆" if tip.y < -0.05 else "中杆")
-	var side: String = " · 右塞" if tip.x > 0.05 else (" · 左塞" if tip.x < -0.05 else "")
-	tip_label.text = "击球点：" + vertical + side
+	var vertical_key: StringName = &"tip.follow" if tip.y > 0.05 else (&"tip.draw" if tip.y < -0.05 else &"tip.center")
+	var vertical: String = api.i18n.text(vertical_key)
+	if absf(tip.x) > 0.05:
+		var side_key: StringName = &"tip.right" if tip.x > 0.0 else &"tip.left"
+		tip_label.text = api.i18n.text(&"hud.tip_with_side", {"vertical": vertical, "side": api.i18n.text(side_key)})
+	else:
+		tip_label.text = api.i18n.text(&"hud.tip", {"vertical": vertical})
 	tip_control.queue_redraw()
 
 func _draw_tip() -> void:
@@ -177,7 +210,8 @@ func render_game() -> void:
 		table_choice.select(table_keys.find(selected_table))
 	status.text = api.i18n.text(&"hud.time", {"time": ceili(view.time), "tables": active.size()})
 	for player: Dictionary in players:
-		update_standing(player.player_id, "%s · %s" % [player.name, "第 %d 名" % int(view.ranks[player.player_id]) if view.ranks.has(player.player_id) else "比赛中"])
+		var standing: String = api.i18n.text(&"hud.rank", {"rank": int(view.ranks[player.player_id])}) if view.ranks.has(player.player_id) else api.i18n.text(&"hud.playing")
+		update_standing(player.player_id, api.i18n.text(&"hud.standing", {"player": player.name, "standing": standing}))
 	if view.tables.has(selected_table):
 		var table: Dictionary = view.tables[selected_table]
 		var names: PackedStringArray = []
@@ -186,6 +220,9 @@ func render_game() -> void:
 		controls.text = api.i18n.text(&"hud.details", {"players": " / ".join(names), "turn": player_name(table.ids[table.turn]), "ball": table.lowest, "time": ceili(table.time), "message": table.message})
 	shoot_button.disabled = not _can_act() or view.tables[selected_table].free
 	power_slider.editable = not shoot_button.disabled
+	table_choice.disabled = not _can_view_input(true)
+	reset_tip_button.disabled = not _can_view_input()
+	my_table_button.disabled = not _can_view_input()
 
 func player_left(_id: String) -> void:
 	finish_rows([], [], "cancelled")

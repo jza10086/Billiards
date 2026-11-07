@@ -27,3 +27,60 @@ msgstr "球桌 {table} · {range}"
 
 msgid "hud.details"
 msgstr "{players}\n轮到：{turn}\n目标：{ball} 号 · 剩余 {time} 秒\n{message}"
+
+msgid "hud.heading"
+msgstr "3d桌球 · 九球分桌赛"
+
+msgid "hud.footer"
+msgstr "鼠标：瞄准 · 左键：摆自由球\nEsc：菜单"
+
+msgid "hud.reset_tip"
+msgstr "恢复中杆"
+
+msgid "hud.my_table"
+msgstr "返回我的球桌"
+
+msgid "hud.shoot"
+msgstr "出杆"
+
+msgid "hud.instructions"
+msgstr "鼠标瞄准，按「出杆」击球。\n白球图选择高低杆和左右塞。\n自由球：点击台面摆白球。"
+
+msgid "hud.tip_help"
+msgstr "点击或拖动白球：上方高杆，下方低杆，左右加塞"
+
+msgid "hud.power"
+msgstr "力度"
+
+msgid "result.rank"
+msgstr "最终名次"
+
+msgid "tip.follow"
+msgstr "高杆"
+
+msgid "tip.draw"
+msgstr "低杆"
+
+msgid "tip.center"
+msgstr "中杆"
+
+msgid "tip.right"
+msgstr "右塞"
+
+msgid "tip.left"
+msgstr "左塞"
+
+msgid "hud.tip"
+msgstr "击球点：{vertical}"
+
+msgid "hud.tip_with_side"
+msgstr "击球点：{vertical} · {side}"
+
+msgid "hud.rank"
+msgstr "第 {rank} 名"
+
+msgid "hud.playing"
+msgstr "比赛中"
+
+msgid "hud.standing"
+msgstr "{player} · {standing}"
