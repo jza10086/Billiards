@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b811hof7dpfbb"
-path="res://.godot/imported/wood_table_001_rough_1k.jpg-c2e457cacc2a0323d807c4680f5bf7fe.ctex"
+path="res://.godot/imported/wood_table_001_rough_1k.jpg-7248089e9d359d79c8bf41170040021c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://games/minigame/godot_party_default_billiards/assets/textures/wood_table_001/wood_table_001_rough_1k.jpg"
-dest_files=["res://.godot/imported/wood_table_001_rough_1k.jpg-c2e457cacc2a0323d807c4680f5bf7fe.ctex"]
+source_file="res://games/minigame/gp_billiards/assets/textures/wood_table_001/wood_table_001_rough_1k.jpg"
+dest_files=["res://.godot/imported/wood_table_001_rough_1k.jpg-7248089e9d359d79c8bf41170040021c.ctex"]
 
 [params]
 

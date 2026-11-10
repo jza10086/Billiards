@@ -1,7 +1,7 @@
 extends "res://games/protocols/godot_party_default_protocol/ranked_round.gd"
 ## Parallel nine-ball tables share only the tournament. Host physics resolves every shot.
-const Tournament: Script = preload("res://games/minigame/godot_party_default_billiards/tournament.gd")
-const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
+const Tournament: Script = preload("res://games/minigame/gp_billiards/tournament.gd")
+const Physics: Script = preload("res://games/minigame/gp_billiards/pool_physics.gd")
 var tournament: RefCounted = Tournament.new()
 var _published_tables: Dictionary = {}
 var _published_ranks: Dictionary = {}
@@ -13,7 +13,7 @@ var _pending_motion: Dictionary = {}
 var _end_msec: int = 0
 var _watching_peers: Dictionary = {}
 var _subscribed_table: String = ""
-const TableArt: Script = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
+const TableArt: Script = preload("res://games/minigame/gp_billiards/table_art.gd")
 @onready var art: TableArt = %PoolTable
 @onready var camera: Camera3D = art.camera
 var balls: Array[Node3D] = []

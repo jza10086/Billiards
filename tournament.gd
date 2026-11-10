@@ -1,7 +1,7 @@
 extends RefCounted
 ## Recursive placement groups. Every table produces one winner; winners/losers
 ## continue in disjoint rank intervals until every player has an exact placement.
-const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
+const Physics: Script = preload("res://games/minigame/gp_billiards/pool_physics.gd")
 var tables: Dictionary = {}
 var groups: Array[Dictionary] = []
 var ranks: Dictionary = {}

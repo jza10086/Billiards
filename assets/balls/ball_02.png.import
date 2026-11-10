@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdmgpw65rii5k"
-path="res://.godot/imported/ball_02.png-b49a06b328e066e9a807d4281ff808b7.ctex"
+path="res://.godot/imported/ball_02.png-7574143d045f5e996891d6170506d78e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://games/minigame/godot_party_default_billiards/assets/balls/ball_02.png"
-dest_files=["res://.godot/imported/ball_02.png-b49a06b328e066e9a807d4281ff808b7.ctex"]
+source_file="res://games/minigame/gp_billiards/assets/balls/ball_02.png"
+dest_files=["res://.godot/imported/ball_02.png-7574143d045f5e996891d6170506d78e.ctex"]
 
 [params]
 

@@ -1,10 +1,10 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://games/minigame/godot_party_default_billiards/game.gd" id="1"]
+[ext_resource type="Script" path="res://games/minigame/gp_billiards/game.gd" id="1"]
 
 [ext_resource type="PackedScene" path="res://games/protocols/godot_party_default_protocol/ranked_round.tscn" id="round"]
 
-[ext_resource type="PackedScene" path="res://games/minigame/godot_party_default_billiards/pool_table.tscn" id="table"]
+[ext_resource type="PackedScene" path="res://games/minigame/gp_billiards/pool_table.tscn" id="table"]
 
 [node name="Game" instance=ExtResource("round")]
 layout_mode = 3
