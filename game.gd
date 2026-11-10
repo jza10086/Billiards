@@ -3,6 +3,16 @@ extends "res://games/protocols/godot_party_default_protocol/ranked_round.gd"
 const Tournament: Script = preload("res://games/minigame/godot_party_default_billiards/tournament.gd")
 const Physics: Script = preload("res://games/minigame/godot_party_default_billiards/pool_physics.gd")
 var tournament: RefCounted = Tournament.new()
+var _published_tables: Dictionary = {}
+var _published_ranks: Dictionary = {}
+var _event_revision: int = 0
+var _received_event: int = 0
+var _motion_sequence: int = 0
+var _received_motion: int = 0
+var _pending_motion: Dictionary = {}
+var _end_msec: int = 0
+var _watching_peers: Dictionary = {}
+var _subscribed_table: String = ""
 const TableArt: Script = preload("res://games/minigame/godot_party_default_billiards/table_art.gd")
 @onready var art: TableArt = %PoolTable
 @onready var camera: Camera3D = art.camera
@@ -59,13 +69,16 @@ func start_game() -> void:
 			ids[index] = ids[target]
 			ids[target] = saved
 		tournament.start(ids, float(settings.get("shot_seconds", 30)))
+		_end_msec = api.net.host_time_msec() + roundi(float(settings.get("duration", 600)) * 1000.0)
 
-## Fast ball motion needs more frequent snapshots than the shared turn-based UI.
+## Sample moving balls at 30 Hz; turn, pocket and rest events remain reliable.
 func _process(delta: float) -> void:
 	if not running:
 		return
 	elapsed += delta
 	tick_game(delta)
+	if not running:
+		return
 	clock += delta
 	if clock >= 1.0 / 30.0:
 		clock = fmod(clock, 1.0 / 30.0)
@@ -112,6 +125,7 @@ func _select_table(index: int) -> void:
 	if not _can_view_input(true):
 		return
 	selected_table = table_keys[index]
+	_subscribe_table()
 
 func _return_to_my_table() -> void:
 	if not _can_view_input():
@@ -119,6 +133,7 @@ func _return_to_my_table() -> void:
 	for key: String in view.tables:
 		if local_id in view.tables[key].ids and view.tables[key].winner == "":
 			selected_table = key
+			_subscribe_table()
 			return
 
 func _reset_tip() -> void:
@@ -192,6 +207,10 @@ func _draw_aim() -> void:
 func render_game() -> void:
 	if view.is_empty():
 		return
+	view.time = maxf(0.0, float(_end_msec - api.net.host_time_msec()) / 1000.0)
+	for table: Dictionary in view.tables.values():
+		if not table.moving:
+			table.time = maxf(0.0, float(table.end_msec - api.net.host_time_msec()) / 1000.0)
 	var active: Array[String] = []
 	for key: String in view.tables:
 		if view.tables[key].winner == "":
@@ -201,6 +220,7 @@ func render_game() -> void:
 		for key: String in active:
 			if local_id in view.tables[key].ids:
 				selected_table = key
+	_subscribe_table()
 	if table_keys != active:
 		table_keys = active
 		table_choice.clear()
@@ -226,3 +246,156 @@ func render_game() -> void:
 
 func player_left(_id: String) -> void:
 	finish_rows([], [], "cancelled")
+
+## Physics stays authoritative. Only poses travel continuously; no physics internals cross the wire.
+func publish() -> void:
+	if not running or not api.is_host():
+		return
+	var current: Dictionary = make_snapshot()
+	var changes: Dictionary = {}
+	var motion: Dictionary = {}
+	for key: String in current.tables:
+		var table: Dictionary = current.tables[key]
+		var previous: Dictionary = _published_tables.get(key, {})
+		var facts: Dictionary = {}
+		for field: String in ["ids", "turn", "epoch", "winner", "free", "message", "range", "moving", "lowest"]:
+			if not previous.has(field) or previous[field] != table[field]:
+				facts[field] = table[field]
+		var new_clock: bool = previous.is_empty() or previous.epoch != table.epoch or previous.moving != table.moving
+		table["end_msec"] = api.net.host_time_msec() + roundi(float(table.time) * 1000.0) if new_clock else previous.end_msec
+		if new_clock:
+			facts["end_msec"] = table.end_msec
+			facts["time"] = table.time
+		var ball_events: Dictionary = {}
+		var poses: Dictionary = {}
+		for index: int in table.balls.size():
+			var ball: Dictionary = table.balls[index]
+			if previous.is_empty() or previous.balls[index].active != ball.active or (not table.moving and (previous.moving or previous.balls[index].pos != ball.pos)):
+				ball_events[index] = {"active": ball.active, "pos": ball.pos, "orientation": ball.orientation}
+			if ball.active and (ball.vel.length_squared() > 0.000001 or absf(ball.spin) > 0.01):
+				poses[index] = {"pos": ball.pos, "orientation": ball.orientation}
+		if not ball_events.is_empty():
+			facts["balls"] = ball_events
+		if not facts.is_empty():
+			changes[key] = facts
+		if not poses.is_empty():
+			motion[key] = poses
+	if not changes.is_empty() or current.ranks != _published_ranks or _event_revision == 0:
+		_event_revision += 1
+		var event: Dictionary = {"revision": _event_revision, "tables": changes}
+		if _event_revision == 1:
+			event["end_msec"] = _end_msec
+		if current.ranks != _published_ranks:
+			event["ranks"] = current.ranks
+		var error: Error = api.net.broadcast(&"pool/events", event, MultiplayerPeer.TRANSFER_MODE_RELIABLE, false)
+		if error != OK:
+			party_stop(&"pool_send_failed")
+			api.fail("pool_events", error_string(error))
+			return
+		_published_ranks = current.ranks.duplicate()
+	_published_tables = current.tables.duplicate(true)
+	if not motion.is_empty():
+		_motion_sequence += 1
+		for player: Dictionary in api.get_room_players():
+			var watched: String = _watching_peers.get(player.peer_id, "")
+			if not player.connected or player.peer_id == 1 or not motion.has(watched):
+				continue
+			var error: Error = api.net.send_to_peer(player.peer_id, &"pool/motion", {"revision": _event_revision, "sample": _motion_sequence, "tables": {watched: motion[watched]}}, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED, 1)
+			if error != OK:
+				party_stop(&"pool_send_failed")
+				api.fail("pool_motion", error_string(error))
+				return
+	view = current
+	render_game()
+
+func _message(sender: Dictionary, topic: StringName, payload: Variant) -> void:
+	if topic == &"pool/watch":
+		if running and api.is_host() and payload is String and _published_tables.has(payload):
+			_watching_peers[sender.peer_id] = payload
+			var poses: Dictionary = {}
+			var table: Dictionary = _published_tables[payload]
+			for index: int in table.balls.size():
+				poses[index] = {"pos": table.balls[index].pos, "orientation": table.balls[index].orientation}
+			_motion_sequence += 1
+			var error: Error = api.net.send_to_peer(sender.peer_id, &"pool/view", {"revision": _event_revision, "sample": _motion_sequence, "tables": {payload: poses}})
+			if error != OK:
+				party_stop(&"pool_watch_failed")
+				api.fail("pool_watch_failed", error_string(error))
+		return
+	if topic not in [&"pool/events", &"pool/motion", &"pool/view"]:
+		super._message(sender, topic, payload)
+		return
+	if not running or sender.peer_id != 1 or api.is_host() or not payload is Dictionary:
+		return
+	if not payload.get("revision") is int or not payload.get("tables") is Dictionary:
+		return
+	if topic in [&"pool/motion", &"pool/view"]:
+		if not payload.get("sample") is int or payload.sample <= _received_motion or payload.revision < _received_event:
+			return
+		_received_motion = payload.sample
+		if payload.revision > _received_event:
+			_pending_motion = payload
+			return
+		_apply_motion(payload)
+		return
+	if payload.revision <= _received_event:
+		return
+	if payload.revision != _received_event + 1:
+		party_stop(&"pool_event_order")
+		api.fail("pool_event_order", "台球事件序列不连续")
+		return
+	if view.is_empty():
+		view = {"tables": {}, "ranks": {}, "time": 0.0}
+	for key: Variant in payload.tables:
+		var changes: Variant = payload.tables[key]
+		if not key is String or not changes is Dictionary:
+			return
+		if not view.tables.has(key):
+			if not changes.get("balls") is Dictionary or changes.balls.size() != 10:
+				return
+			view.tables[key] = {"balls": [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]}
+		for field: String in changes:
+			if field == "balls":
+				for index: Variant in changes.balls:
+					if not index is int or index < 0 or index >= 10 or not _valid_pose(changes.balls[index]) or not changes.balls[index].get("active") is bool:
+						return
+					view.tables[key].balls[index].merge(changes.balls[index], true)
+			else:
+				view.tables[key][field] = changes[field]
+	if payload.has("end_msec"):
+		if not payload.end_msec is int:
+			return
+		_end_msec = payload.end_msec
+	if payload.has("ranks"):
+		if not payload.ranks is Dictionary:
+			return
+		view.ranks = payload.ranks
+	_received_event = payload.revision
+	if not _pending_motion.is_empty() and _pending_motion.revision <= _received_event:
+		if _pending_motion.revision == _received_event:
+			_apply_motion(_pending_motion)
+		_pending_motion.clear()
+	render_game()
+
+func _valid_pose(value: Variant) -> bool:
+	return value is Dictionary and value.get("pos") is Vector2 and value.pos.is_finite() and value.get("orientation") is Quaternion and value.orientation.is_finite()
+
+func _apply_motion(payload: Dictionary) -> void:
+	for key: Variant in payload.tables:
+		if not key is String or not view.tables.has(key) or not payload.tables[key] is Dictionary:
+			continue
+		for index: Variant in payload.tables[key]:
+			if not index is int or index < 0 or index >= 10 or not _valid_pose(payload.tables[key][index]):
+				continue
+			view.tables[key].balls[index].merge(payload.tables[key][index], true)
+
+## Spectators and players receive motion for the table they are actually viewing.
+func _subscribe_table() -> void:
+	if api.is_host() or selected_table.is_empty() or selected_table == _subscribed_table:
+		return
+	var error: Error = api.net.send_to_host(&"pool/watch", selected_table)
+	if error != OK:
+		party_stop(&"pool_watch_failed")
+		api.fail("pool_watch_failed", error_string(error))
+		return
+	_subscribed_table = selected_table
