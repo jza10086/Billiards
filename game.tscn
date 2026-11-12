@@ -1,12 +1,15 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://games/minigame/gp_billiards/ui/round_pages.tscn" id="protocol_pages"]
+
 [ext_resource type="Script" path="res://games/minigame/gp_billiards/game.gd" id="1"]
 
 [ext_resource type="PackedScene" path="res://games/protocols/godot_party_default_protocol/ranked_round.tscn" id="round"]
 
 [ext_resource type="PackedScene" path="res://games/minigame/gp_billiards/pool_table.tscn" id="table"]
 
-[node name="Game" instance=ExtResource("round")]
+[node name="Game" instance=ExtResource("round") node_paths=PackedStringArray("pages")]
+pages = NodePath("ProtocolPages")
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -98,3 +101,6 @@ size_flags_vertical = 4
 unique_name_in_owner = true
 text = "出杆"
 custom_minimum_size = Vector2(140,48)
+
+[node name="ProtocolPages" parent="." instance=ExtResource("protocol_pages")]
+unique_name_in_owner = true
