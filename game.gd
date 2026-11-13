@@ -1,9 +1,5 @@
 extends "res://games/protocols/godot_party_default_protocol/ranked_round.gd"
 
-## Content-owned gameplay rules, independent of package compatibility.
-static func party_definition() -> Dictionary:
-	return {"player_counts": [2, 3, 4, 5, 6, 7, 8], "tags": ["original"]}
-
 ## Parallel nine-ball tables share only the tournament. Host physics resolves every shot.
 const Tournament: Script = preload("res://games/minigame/gp_billiards/tournament.gd")
 const Physics: Script = preload("res://games/minigame/gp_billiards/pool_physics.gd")
