@@ -1,49 +1,10 @@
 {
-  "manifest_version": 2,
-  "core_api_major": 6,
-  "package_version": "1.0.15",
-  "id": "gp_billiards",
   "name": "GodotPartyDefault · 3d桌球",
   "kind": "minigame",
-  "supported_systems": [
-    "windows"
-  ],
-  "entry": "game.tscn",
-  "player_counts": [
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8
-  ],
-  "tags": [
-    "original"
-  ],
+  "package_version": "0.0.1",
+  "framework_version": "0.0.1",
+  "remark": "",
   "dependencies": {
-    "godot_party_default_protocol": "1.0.14"
-  },
-  "adapters": [
-    {
-      "id": "standard",
-      "protocol": {
-        "id": "godot_party_default_protocol",
-        "api_major": 1,
-        "min_api_minor": 0
-      },
-      "entry": "adapter.gd"
-    }
-  ],
-  "config_schema": "settings.gd",
-  "introduction": "2–8 人九球分桌赛；优先两人桌，奇数组最后三人桌，每桌一名胜者，胜负分组继续决出名次。",
-  "localization": {
-    "supported_locales": [
-      "zh_Hans"
-    ],
-    "fallback_locale": "zh_Hans",
-    "translations": {
-      "zh_Hans": "i18n/zh_Hans.po"
-    }
+    "godot_party_default_protocol": "~0.0.1"
   }
 }
