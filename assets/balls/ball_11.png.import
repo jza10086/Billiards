@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://games/minigame/gp_billiards/assets/balls/ball_11.png"
+source_file="res://games/minigame/GP_billiards/assets/balls/ball_11.png"
 dest_files=["res://.godot/imported/ball_11.png-47388624a386f3d9a4bf414d4edfe9c2.ctex"]
 
 [params]

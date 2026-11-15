@@ -2,10 +2,10 @@
 
 来源：2026-11-07 架构审查及其最后实施记录。整理日期：2026-11-14。下列待办保留原状态；实施前核对本包源码与工作区，不以历史检查代替本次验收。
 
-[共享 G01–G03 任务](../../../protocols/godot_party_default_protocol/doc/godot_party_default_protocol_development.md) · [包说明](gp_billiards_guide.md)
+[共享 G01–G03 任务](../../../protocols/GP_default_protocol/doc/GP_default_protocol_development.md) · [包说明](GP_billiards_guide.md)
 
 
-包：`gp_billiards`。定位：[game.gd](../game.gd) 的 `_table_input()`、`_tip_input()`、`render_game()`；`pool_table.tscn`。
+包：`GP_billiards`。定位：[game.gd](../game.gd) 的 `_table_input()`、`_tip_input()`、`render_game()`；`pool_table.tscn`。
 
 验证：主相机拾取、自由球摆位、观战切桌、击球点与力度、双端击球至结算。无现有音频，不强制新增音频系统。
 

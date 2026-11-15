@@ -18,6 +18,6 @@
 
 未带 `res://` 的源码路径以本包根目录为基准。
 
-- [美术、音效与字体来源](gp_billiards_art_sources.md)
-- [M12 3D 桌球　B　依赖 G01](gp_billiards_development.md)
-- [gp_billiards_source](gp_billiards_source.md)
+- [美术、音效与字体来源](GP_billiards_art_sources.md)
+- [M12 3D 桌球　B　依赖 G01](GP_billiards_development.md)
+- [GP_billiards_source](GP_billiards_source.md)

@@ -84,3 +84,6 @@ msgstr "比赛中"
 
 msgid "hud.standing"
 msgstr "{player} · {standing}"
+
+msgid "package.name"
+msgstr "GodotPartyDefault · 3d桌球"

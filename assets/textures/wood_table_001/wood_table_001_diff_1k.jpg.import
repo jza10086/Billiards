@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://games/minigame/gp_billiards/assets/textures/wood_table_001/wood_table_001_diff_1k.jpg"
+source_file="res://games/minigame/GP_billiards/assets/textures/wood_table_001/wood_table_001_diff_1k.jpg"
 dest_files=["res://.godot/imported/wood_table_001_diff_1k.jpg-c324de9258ef642c4efaef64bb03aef8.ctex"]
 
 [params]
