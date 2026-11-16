@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dd7rhm8x23rw3"
-path="res://.godot/imported/wood_table_001_diff_1k.jpg-c324de9258ef642c4efaef64bb03aef8.ctex"
+path="res://.godot/imported/wood_table_001_diff_1k.jpg-cfc978a888a913dc70737d7998b83729.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://games/minigame/GP_billiards/assets/textures/wood_table_001/wood_table_001_diff_1k.jpg"
-dest_files=["res://.godot/imported/wood_table_001_diff_1k.jpg-c324de9258ef642c4efaef64bb03aef8.ctex"]
+dest_files=["res://.godot/imported/wood_table_001_diff_1k.jpg-cfc978a888a913dc70737d7998b83729.ctex"]
 
 [params]
 

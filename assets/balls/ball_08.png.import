@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://buk88xl5oc3yj"
-path="res://.godot/imported/ball_08.png-7b09b88f8a9f0df420782b149b498f8a.ctex"
+path="res://.godot/imported/ball_08.png-17b7ea6d2b2702a8528cc8a5361714c6.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://games/minigame/GP_billiards/assets/balls/ball_08.png"
-dest_files=["res://.godot/imported/ball_08.png-7b09b88f8a9f0df420782b149b498f8a.ctex"]
+dest_files=["res://.godot/imported/ball_08.png-17b7ea6d2b2702a8528cc8a5361714c6.ctex"]
 
 [params]
 
